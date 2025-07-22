@@ -1,0 +1,80 @@
+_schema-version: "3.2"
+ID: cumplimiento_app
+version: 0.0.1
+modules:
+- name: cumplimiento_app-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: cumplimiento_app-destination-service
+    parameters:
+      content-target: true
+  - name: cumplimiento_app_html_repo_host
+    parameters:
+      service-key:
+        name: cumplimiento_app_html_repo_host-key
+  - name: uaa_cumplimiento_app
+    parameters:
+      service-key:
+        name: uaa_cumplimiento_app-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: ReactAppCumpto_cumplimiento_app_html_repo_host
+          ServiceInstanceName: cumplimiento_app-html5-app-host-service
+          ServiceKeyName: cumplimiento_app_html_repo_host-key
+          sap.cloud.service: ReactAppCumpto
+        - Authentication: OAuth2UserTokenExchange
+          Name: ReactAppCumpto_uaa_cumplimiento_app
+          ServiceInstanceName: cumplimiento_app-xsuaa-service
+          ServiceKeyName: uaa_cumplimiento_app-key
+          sap.cloud.service: ReactAppCumpto
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: cumplimiento_app_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: cumplimiento_app_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - ordenes-content.zip
+      name: ordenes
+      target-path: resources/
+- name: ordenes
+  type: html5
+  path: ordenes
+  build-parameters:
+    builder: custom
+    commands:
+    - npm install
+    - npm run build
+    supported-platforms: []
+resources:
+- name: cumplimiento_app-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      version: 1.0.0
+    service: destination
+    service-name: cumplimiento_app-destination-service
+    service-plan: lite
+- name: cumplimiento_app_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: cumplimiento_app-html5-app-host-service
+    service-plan: app-host
+- name: uaa_cumplimiento_app
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: cumplimiento_app-xsuaa-service
+    service-plan: application
